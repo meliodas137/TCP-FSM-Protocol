@@ -7,7 +7,8 @@ import Fsm.Transition;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 public class TcpFSM {
     static FSM tcp;
     static ActionImp act = new ActionImp();
@@ -15,25 +16,37 @@ public class TcpFSM {
     public static HashMap<String, EventImp> events = new HashMap<String, EventImp>();
 
     public static void main(String[] args) {
+
+        if (0 == args.length){
+            System.out.println("Invalid arguments count:" + args.length);
+            return;
+        }
         createStates();
         createEvents();
         tcp = new FSM("TCP", states.get("LISTEN"));
         createTransitions();
-        Scanner sc = new Scanner(System.in);
-        while(sc.hasNextLine()){
-            String str = sc.nextLine();
-            if(str.isEmpty()) return;
-            if(!events.containsKey(str)) {
-                System.out.println("Error: unexpected Event: " + str);
-            }
-            else {
-                try {
-                    tcp.doEvent(events.get(str));
-                } catch (FsmException e) {
-                    System.out.println("Error: unexpected Event: " + str);
+        try {
+            Scanner sc = new Scanner(new FileInputStream(args[0]));
+            while (sc.hasNextLine()) {
+                String str = sc.nextLine();
+                if (str.isEmpty()) return;
+                String[] eventList = str.split("\\s+");
+                for (String evn : eventList) {
+                    if (!events.containsKey(evn)) {
+                        System.out.println("Error: unexpected Event: " + evn);
+                    } else {
+                        try {
+                            tcp.doEvent(events.get(evn));
+                        } catch (FsmException e) {
+                            System.out.println("Error: unexpected Event: " + evn);
+                        }
+                    }
                 }
             }
-
+        }
+        catch (FileNotFoundException e) {
+            System.out.println("Input File not found: " + args[0]);
+            return;
         }
     }
 
